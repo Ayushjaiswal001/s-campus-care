@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CampusCare AI — Sign In</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color:#534d5b;
+            color: #2c2f2d;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 32px;
+        }
+        .signin-box {
+            width: 560px;
+            max-width: 100%;
+            background-color: #ffffff;
+            border: 1px solid #e2e0d8;
+            border-radius: 16px;
+            padding: 64px 60px;
+        }
+        h1 {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 38px;
+            font-weight: normal;
+            color: #1f2924;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .sub {
+            font-size: 16px;
+            color: #6c736f;
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        .role-tabs {
+            display: flex;
+            background-color: #f4f3ef;
+            padding: 6px;
+            border-radius: 10px;
+            margin-bottom: 32px;
+            border: 1px solid #e5e3dc;
+        }
+        .role-tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #5c635f;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: background-color 0.15s, color 0.15s;
+        }
+        .role-tab.active {
+            background-color: #ffffff;
+            color: #011318;
+            border: 1px solid #dcd9d0;
+        }
+        label {
+            display: block;
+            font-size: 15px;
+            font-weight: 600;
+            color: #3a3f3c;
+            margin-bottom: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 18px 18px;
+            margin-bottom: 26px;
+            font-size: 17px;
+            color: #1f2924;
+            background-color: #faf9f6;
+            border: 1px solid #d6d3c9;
+            border-radius: 8px;
+        }
+        input:focus {
+            outline: none;
+            background-color: #ffffff;
+            border-color: #2d5a4c;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 18px;
+            margin-top: 8px;
+            background-color:	#bd8d5d;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-login:hover {
+            background-color: #bd8d5d;
+        }
+        .error {
+            background-color: #fdf2f2;
+            color: #b42318;
+            border: 1px solid #f5c2c0;
+            padding: 14px 16px;
+            border-radius: 8px;
+            font-size: 15px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 600px) {
+            .signin-box { padding: 40px 28px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="signin-box">
+        <h1>CampusCare AI</h1>
+        <p class="sub">Sign in to continue</p>
+
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+        <form method="POST">
+            <input type="hidden" name="role" id="roleInput" value="student">
+
+            <div class="role-tabs">
+                <div class="role-tab active" id="tab-student" onclick="chooseRole('student')">Student</div>
+                <div class="role-tab" id="tab-admin" onclick="chooseRole('admin')">Admin</div>
+            </div>
+
+            <label>Username</label>
+            <input type="text" name="username" placeholder="Enter username" required>
+
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Enter password" required>
+
+            <button type="submit" class="btn-login" id="loginBtn">Sign In as Student</button>
+        </form>
+    </div>
+
+    <script>
+        function chooseRole(role) {
+            document.getElementById('roleInput').value = role;
+            document.getElementById('tab-student').classList.toggle('active', role === 'student');
+            document.getElementById('tab-admin').classList.toggle('active', role === 'admin');
+            document.getElementById('loginBtn').innerText = role === 'admin' ? 'Sign In as Admin' : 'Sign In as Student';
+        }
+    </script>
+</body>
+</html>

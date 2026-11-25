@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CampusCare AI — Admin Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: grey;
+            color: #2c2f2d;
+            padding-bottom: 50px;
+        }
+        .topbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e0d8;
+            padding: 18px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .brand {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 24px;
+            color: #1f2924;
+        }
+        .brand span {
+            font-family: -apple-system, sans-serif;
+            font-size: 13px;
+            background-color: #2d5a4c;
+            color: #ffffff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-left: 10px;
+            font-weight: 600;
+        }
+        .nav-right { display: flex; align-items: center; gap: 18px; font-size: 15px; color: #525b56; }
+        .btn-logout {
+            text-decoration: none;
+            background-color: #fdf2f2;
+            color: #b42318;
+            border: 1px solid #f5c2c0;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .btn-logout:hover { background-color: #fbe4e4; }
+
+        .main { max-width: 1120px; margin: 36px auto; padding: 0 24px; }
+
+        /* Stat Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background-color: #ffffff;
+            border: 1px solid #e2e0d8;
+            border-radius: 12px;
+            padding: 22px 24px;
+        }
+        .stat-label { font-size: 13px; color: #6c736f; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+        .stat-num { font-family: Georgia, serif; font-size: 32px; color: #1f2924; margin-top: 6px; }
+
+        .panel {
+            background-color: #ffffff;
+            border: 1px solid #e2e0d8;
+            border-radius: 14px;
+            padding: 30px 32px;
+        }
+        .panel h2 {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 22px;
+            font-weight: normal;
+            color: #1f2924;
+            margin-bottom: 16px;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        th, td { text-align: left; padding: 14px 12px; border-bottom: 1px solid #eceae2; font-size: 15px; }
+        th { color: #6c736f; font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; }
+        .High { color: #b42318; font-weight: 600; }
+        .Medium { color: #b54708; font-weight: 600; }
+        .Low { color: #2d5a4c; font-weight: 600; }
+
+        select {
+            padding: 7px 10px;
+            border-radius: 6px;
+            border: 1px solid #d6d3c9;
+            background-color: #faf9f6;
+            font-size: 14px;
+            color: #1f2924;
+        }
+        .btn-update {
+            background-color: #2d5a4c;
+            color: #ffffff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-update:hover { background-color: #23473c; }
+        @media (max-width: 720px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="brand">CampusCare AI <span>Admin Dashboard</span></div>
+        <div class="nav-right">
+            <span>Signed in as <b>{{ user }}</b></span>
+            <a href="/logout" class="btn-logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Campus Issues</div>
+                <div class="stat-num">{{ stats.total }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Open</div>
+                <div class="stat-num">{{ stats.open }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">In Progress</div>
+                <div class="stat-num">{{ stats.progress }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Resolved</div>
+                <div class="stat-num">{{ stats.resolved }}</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>All Reported Campus Issues</h2>
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Student</th>
+                    <th>Issue Description</th>
+                    <th>AI Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Update Status</th>
+                </tr>
+                {% for issue in issues %}
+                <tr>
+                    <td>#{{ issue[0] }}</td>
+                    <td>{{ issue[1] }}</td>
+                    <td>{{ issue[2] }}</td>
+                    <td>{{ issue[3] }}</td>
+                    <td class="{{ issue[4] }}">{{ issue[4] }}</td>
+                    <td><b>{{ issue[5] }}</b></td>
+                    <td>
+                        <form action="/update_issue/{{ issue[0] }}" method="POST" style="display:flex; gap:8px;">
+                            <select name="status">
+                                <option value="Open" {% if issue[5]=='Open' %}selected{% endif %}>Open</option>
+                                <option value="In Progress" {% if issue[5]=='In Progress' %}selected{% endif %}>In Progress</option>
+                                <option value="Resolved" {% if issue[5]=='Resolved' %}selected{% endif %}>Resolved</option>
+                            </select>
+                            <button type="submit" class="btn-update">Update</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" style="color:#6c736f; text-align:center; padding:24px;">No campus issues reported yet.</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</body>
+</html>

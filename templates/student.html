@@ -1,0 +1,370 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>CampusCare AI | Student Dashboard</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f1f5f3;
+    color: #26352e;
+}
+
+.topbar {
+    background: #ffffff;
+    padding: 20px 6%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px #0000000d;
+}
+
+.brand {
+    font-size: 24px;
+    font-weight: bold;
+    color: #205b45;
+}
+
+.brand span {
+    font-size: 12px;
+    background: #e3f2e9;
+    padding: 6px 10px;
+    border-radius: 20px;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logout {
+    text-decoration: none;
+    background: #fee2e2;
+    color: #b42318;
+    padding: 9px 16px;
+    border-radius: 8px;
+}
+
+.main {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.welcome {
+    margin-bottom: 25px;
+}
+
+.welcome h1 {
+    font-size: 29px;
+    margin-bottom: 8px;
+}
+
+.welcome p {
+    color: #738078;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #e2eae4;
+}
+
+.stat-card p {
+    color: #78847c;
+    font-size: 13px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.stat-card h2 {
+    font-size: 32px;
+    margin-top: 12px;
+    color: #205b45;
+}
+
+.panel {
+    background: white;
+    padding: 30px;
+    margin-bottom: 25px;
+    border-radius: 14px;
+    border: 1px solid #e2eae4;
+}
+
+.panel h2 {
+    margin-bottom: 20px;
+    font-size: 22px;
+}
+
+textarea {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #ccd8cf;
+    border-radius: 8px;
+    font-size: 15px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+textarea:focus {
+    outline: 2px solid #80b99b;
+    border-color: #205b45;
+}
+
+button {
+    background: #205b45;
+    color: white;
+    border: none;
+    padding: 13px 25px;
+    border-radius: 8px;
+    margin-top: 15px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #164532;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 650px;
+}
+
+th, td {
+    text-align: left;
+    padding: 15px 12px;
+    border-bottom: 1px solid #edf0ed;
+    font-size: 14px;
+}
+
+th {
+    color: #78847c;
+    font-size: 12px;
+}
+
+.High {
+    color: #dc2626;
+    font-weight: bold;
+}
+
+.Medium {
+    color: #d97706;
+    font-weight: bold;
+}
+
+.Low {
+    color: #15803d;
+    font-weight: bold;
+}
+
+.status-pill {
+    background: #e8f1eb;
+    color: #205b45;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.footer {
+    text-align: center;
+    color: #849087;
+    padding: 20px;
+}
+
+@media(max-width: 750px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .topbar {
+        padding: 15px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .brand {
+        font-size: 19px;
+    }
+
+    .welcome h1 {
+        font-size: 23px;
+    }
+}
+
+@media(max-width: 400px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div class="brand">
+        CampusCare AI
+        <span>Student Dashboard</span>
+    </div>
+
+    <div class="nav-right">
+        <span>Welcome, <b>{{ user }}</b></span>
+        <a href="/logout" class="logout">Logout</a>
+    </div>
+
+</header>
+
+
+<main class="main">
+
+    <section class="welcome">
+        <h1>Student Dashboard 👋</h1>
+        <p>Report campus problems and track their progress.</p>
+    </section>
+
+
+    <section class="stats-grid">
+
+        <div class="stat-card">
+            <p>My Reports</p>
+            <h2>{{ stats.total }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <p>Open</p>
+            <h2>{{ stats.open }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <p>In Progress</p>
+            <h2>{{ stats.progress }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <p>Resolved</p>
+            <h2>{{ stats.resolved }}</h2>
+        </div>
+
+    </section>
+
+
+    <section class="panel">
+
+        <h2>📝 Report a Campus Issue</h2>
+
+        {% if error %}
+            <p role="alert" style="color:#b42318;margin-bottom:12px;">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST">
+
+            <textarea
+                name="description"
+                rows="4"
+                placeholder="Describe your campus problem here..."
+                required
+                minlength="5"
+                maxlength="2000"
+            ></textarea>
+
+            <button type="submit">
+                Submit Issue →
+            </button>
+
+        </form>
+
+    </section>
+
+
+    <section class="panel">
+
+        <h2>📋 My Reported Issues</h2>
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Description</th>
+                        <th>AI Category</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% for issue in issues %}
+
+                    <tr>
+                        <td>#{{ issue.id }}</td>
+                        <td>{{ issue.description }}</td>
+                        <td>{{ issue.category }}</td>
+                        <td class="{{ issue.priority }}">
+                            {{ issue.priority }}
+                        </td>
+                        <td>
+                            <span class="status-pill">
+                                {{ issue.status }}
+                            </span>
+                        </td>
+                        <td>{{ issue.created_at }}</td>
+                    </tr>
+
+                {% else %}
+
+                    <tr>
+                        <td colspan="6" style="text-align:center;padding:30px;">
+                            No issues reported yet.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</main>
+
+<footer class="footer">
+    CampusCare AI © 2026 | Smart Campus Issue Reporter
+</footer>
+
+</body>
+</html>
