@@ -1,6 +1,6 @@
 # S Campus Care
 
-S Campus Care is a small Flask application for reporting campus facility issues. Students submit a description and track its status. Positive notes about facilities being fine or working are saved as feedback, separately from actionable issues. An administrator reviews reports and feedback, and moves issues through Open, In Progress, and Resolved. A local TF–IDF plus Multinomial Naive Bayes classifier suggests a category and priority; clear equipment and service keywords take precedence for category assignment.
+S Campus Care is a small Flask application for reporting campus facility issues. Students submit a description and track its status. Positive notes about facilities being fine or working are saved as feedback, separately from actionable issues. An administrator reviews reports and feedback, and moves issues through Open, In Progress, and Resolved. Category rules route named equipment and services to their departments; descriptions without a recognizable category clue fall back to General Campus Facility. A local TF–IDF plus Multinomial Naive Bayes model suggests priority.
 
 ## Requirements
 

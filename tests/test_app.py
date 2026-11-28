@@ -65,6 +65,41 @@ class CampusCareTestCase(unittest.TestCase):
         self.assertEqual(conn.execute('SELECT COUNT(*) FROM issues').fetchone()[0], 0)
         conn.close()
 
+    def test_named_equipment_category_overrides_generic_working_language(self):
+        category, _ = campus_app.analyze_issue_ai(
+            'Ceiling fan in the computer lab is not working'
+        )
+        self.assertEqual(category, 'Electrical & Maintenance')
+
+    def test_description_without_an_equipment_hint_does_not_default_to_it(self):
+        category, _ = campus_app.analyze_issue_ai('I am not working')
+        self.assertEqual(category, 'General Campus Facility')
+
+    def test_positive_status_is_saved_as_feedback_not_an_issue(self):
+        self.login()
+        response = self.client.post('/student', data={
+            'description': 'Everything is fine and the fan is working',
+        }, follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'saved separately from reported issues', response.data)
+        conn = sqlite3.connect(self.database)
+        self.assertEqual(conn.execute('SELECT COUNT(*) FROM issues').fetchone()[0], 0)
+        feedback = conn.execute('SELECT description FROM feedback').fetchone()
+        conn.close()
+        self.assertEqual(feedback[0], 'Everything is fine and the fan is working')
+
+    def test_negated_working_status_stays_an_issue(self):
+        self.login()
+        self.client.post('/student', data={
+            'description': 'The fan is not working',
+        })
+        conn = sqlite3.connect(self.database)
+        row = conn.execute('SELECT category FROM issues').fetchone()
+        feedback_count = conn.execute('SELECT COUNT(*) FROM feedback').fetchone()[0]
+        conn.close()
+        self.assertEqual(row[0], 'Electrical & Maintenance')
+        self.assertEqual(feedback_count, 0)
+
     def test_admin_updates_issue_and_rejects_unknown_status(self):
         self.login()
         self.client.post('/student', data={'description': 'Broken window in the corridor'})

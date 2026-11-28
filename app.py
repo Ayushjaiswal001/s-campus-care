@@ -20,29 +20,28 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-# --- AI MODEL TRAINING (TF-IDF + Multinomial Naive Bayes) ---
+# --- Priority model training (TF-IDF + Multinomial Naive Bayes) ---
 TRAIN_DATA = [
-    ("wifi not working in computer lab", "IT & Lab Infrastructure", "Medium"),
-    ("internet slow in library", "IT & Lab Infrastructure", "Medium"),
-    ("projector broken in classroom", "IT & Lab Infrastructure", "Medium"),
-    ("network down and lan cable cut in lab", "IT & Lab Infrastructure", "High"),
-    ("short circuit spark in switchboard", "Electrical & Maintenance", "High"),
-    ("water leak from ceiling pipe", "Electrical & Maintenance", "High"),
-    ("exposed live wire near corridor", "Electrical & Maintenance", "High"),
-    ("fan making noise and light flickering", "Electrical & Maintenance", "Low"),
-    ("washroom dirty and overflowing", "Sanitation & Housekeeping", "High"),
-    ("garbage bin full near canteen", "Sanitation & Housekeeping", "Medium"),
-    ("dusty floor and benches in room", "Sanitation & Housekeeping", "Low"),
-    ("door lock jammed in classroom", "General Campus Facility", "Medium"),
-    ("broken window glass in corridor", "General Campus Facility", "High"),
-    ("bench wooden plank loose", "General Campus Facility", "Low"),
+    ("wifi not working in computer lab", "Medium"),
+    ("internet slow in library", "Medium"),
+    ("projector broken in classroom", "Medium"),
+    ("network down and lan cable cut in lab", "High"),
+    ("short circuit spark in switchboard", "High"),
+    ("water leak from ceiling pipe", "High"),
+    ("exposed live wire near corridor", "High"),
+    ("fan making noise and light flickering", "Low"),
+    ("washroom dirty and overflowing", "High"),
+    ("garbage bin full near canteen", "Medium"),
+    ("dusty floor and benches in room", "Low"),
+    ("door lock jammed in classroom", "Medium"),
+    ("broken window glass in corridor", "High"),
+    ("bench wooden plank loose", "Low"),
 ]
 
 vectorizer = TfidfVectorizer()
 X_train = vectorizer.fit_transform([x[0] for x in TRAIN_DATA])
 
-cat_model = MultinomialNB().fit(X_train, [x[1] for x in TRAIN_DATA])
-prio_model = MultinomialNB().fit(X_train, [x[2] for x in TRAIN_DATA])
+prio_model = MultinomialNB().fit(X_train, [x[1] for x in TRAIN_DATA])
 
 # Strong equipment and service terms are more reliable than the tiny training
 # set when a report names the affected item (for example, a fan in a lab).
@@ -51,14 +50,21 @@ CATEGORY_RULES = (
         r'\b(?:fan|fans|light|lights|bulb|bulbs|tube light|switch|switchboard|'
         r'socket|plug|wiring|wire|electricity|electrical|power supply|power cut|'
         r'short circuit|circuit breaker|fuse|voltage|generator|inverter|'
-        r'air conditioner|air conditioning|heater|heating)\b', re.IGNORECASE)),
+        r'air conditioner|air conditioning|heater|heating|boiler|plumbing|'
+        r'pipe|tap|faucet|leak|leaking|ac)\b', re.IGNORECASE)),
     ('IT & Lab Infrastructure', re.compile(
         r'\b(?:wi[ -]?fi|internet|network|lan|computer|laptop|desktop|'
-        r'projector|printer|server|software|login|keyboard|mouse)\b', re.IGNORECASE)),
+        r'projector|printer|server|software|login|keyboard|mouse|router|'
+        r'modem|scanner|monitor|access point|smart board)\b', re.IGNORECASE)),
     ('Sanitation & Housekeeping', re.compile(
         r'\b(?:washroom|restroom|toilet|bathroom|garbage|trash|rubbish|'
         r'dust|dirty|cleaning|housekeeping|overflowing|drain|sewage|'
-        r'bin|litter)\b', re.IGNORECASE)),
+        r'bin|litter|odor|odour|smell|pest|rodent|insect|hygiene)\b', re.IGNORECASE)),
+    ('General Campus Facility', re.compile(
+        r'\b(?:door|window|glass|bench|desk|chair|table|furniture|ceiling|'
+        r'floor|wall|roof|staircase|stairs|lift|elevator|classroom|room|'
+        r'corridor|hallway|gate|parking|road|playground|building|lock)\b',
+        re.IGNORECASE)),
 )
 
 NEGATIVE_FEEDBACK_PATTERN = re.compile(
@@ -97,14 +103,8 @@ def analyze_issue_ai(text):
     X_test = vectorizer.transform([text])
     category = next(
         (label for label, pattern in CATEGORY_RULES if pattern.search(text)),
-        None,
+        'General Campus Facility',
     )
-    if category is None:
-        category = cat_model.predict(X_test)[0]
-        confidence = max(cat_model.predict_proba(X_test)[0])
-        # Fallback if user types random junk/gibberish.
-        if confidence < 0.30:
-            category = 'General Campus Facility'
     priority = prio_model.predict(X_test)[0]
     return category, priority
 # ------------------------------------------------------------
