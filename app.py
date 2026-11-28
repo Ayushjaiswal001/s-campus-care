@@ -264,6 +264,20 @@ def update_issue(issue_id):
     return redirect(url_for('admin_panel'))
 
 
+@app.route('/delete_issue/<int:issue_id>', methods=['POST'])
+def delete_issue(issue_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    try:
+        conn.execute("DELETE FROM issues WHERE id=?", (issue_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for('admin_panel'))
+
+
 @app.route('/logout')
 def logout():
     session.clear()

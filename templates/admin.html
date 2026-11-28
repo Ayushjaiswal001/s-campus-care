@@ -103,6 +103,17 @@
             cursor: pointer;
         }
         .btn-update:hover { background-color: #23473c; }
+        .btn-remove {
+            background-color: #b42318;
+            color: #ffffff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-remove:hover { background-color: #8f1c13; }
         @media (max-width: 720px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
 </head>
@@ -145,7 +156,7 @@
                     <th>Category</th>
                     <th>Priority</th>
                     <th>Status</th>
-                    <th>Update Status</th>
+                    <th>Actions</th>
                 </tr>
                 {% for issue in issues %}
                 <tr>
@@ -163,6 +174,13 @@
                                 <option value="Resolved" {% if issue[5]=='Resolved' %}selected{% endif %}>Resolved</option>
                             </select>
                             <button type="submit" class="btn-update">Update</button>
+                            <button
+                                type="submit"
+                                class="btn-remove"
+                                formaction="{{ url_for('delete_issue', issue_id=issue[0]) }}"
+                                formmethod="POST"
+                                onclick="return confirm('Remove this complaint permanently?')"
+                            >Remove</button>
                         </form>
                     </td>
                 </tr>
