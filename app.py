@@ -1,4 +1,5 @@
 import os
+import re
 import secrets
 import sqlite3
 from pathlib import Path
@@ -43,17 +44,69 @@ X_train = vectorizer.fit_transform([x[0] for x in TRAIN_DATA])
 cat_model = MultinomialNB().fit(X_train, [x[1] for x in TRAIN_DATA])
 prio_model = MultinomialNB().fit(X_train, [x[2] for x in TRAIN_DATA])
 
+# Strong equipment and service terms are more reliable than the tiny training
+# set when a report names the affected item (for example, a fan in a lab).
+CATEGORY_RULES = (
+    ('Electrical & Maintenance', re.compile(
+        r'\b(?:fan|fans|light|lights|bulb|bulbs|tube light|switch|switchboard|'
+        r'socket|plug|wiring|wire|electricity|electrical|power supply|power cut|'
+        r'short circuit|circuit breaker|fuse|voltage|generator|inverter|'
+        r'air conditioner|air conditioning|heater|heating)\b', re.IGNORECASE)),
+    ('IT & Lab Infrastructure', re.compile(
+        r'\b(?:wi[ -]?fi|internet|network|lan|computer|laptop|desktop|'
+        r'projector|printer|server|software|login|keyboard|mouse)\b', re.IGNORECASE)),
+    ('Sanitation & Housekeeping', re.compile(
+        r'\b(?:washroom|restroom|toilet|bathroom|garbage|trash|rubbish|'
+        r'dust|dirty|cleaning|housekeeping|overflowing|drain|sewage|'
+        r'bin|litter)\b', re.IGNORECASE)),
+)
+
+NEGATIVE_FEEDBACK_PATTERN = re.compile(
+    r'\b(?:not|never|no longer|stopped|quit|isn.t|aren.t|wasn.t|weren.t|'
+    r'doesn.t|don.t|didn.t|cannot|can.t|unable to)\s+(?:(?:\w+)\s+){0,2}'
+    r'(?:work(?:ing|s)?|function(?:ing|s)?|operat(?:e|ing)|run(?:ning)?)\b'
+    r'|\b(?:not|isn.t|aren.t|wasn.t|weren.t|doesn.t|don.t|didn.t)\s+'
+    r'(?:fine|good|great|okay|ok|functional|operational|clean|satisfactory)\b'
+    r'|\b(?:broken|damaged|faulty|malfunction\w*|failed|failure|'
+    r'leak(?:ing)?|dirty|slow|bad(?:ly)?|poor|unsatisfactory|defective|'
+    r'intermittent\w*|irregular\w*|occasionally|sometimes|noisy|'
+    r'flicker\w*|overflow\w*|clogged|jammed|stuck|cracked|unusable|'
+    r'unavailable|spark|smoke|short circuit)\b',
+    re.IGNORECASE,
+)
+POSITIVE_FEEDBACK_PATTERN = re.compile(
+    r'\b(?:working(?:\s+(?:fine|properly|normally|well|perfectly))?|'
+    r'functioning(?:\s+(?:properly|normally|well))?|'
+    r'works?(?:\s+(?:fine|properly|normally|well|perfectly))?|'
+    r'(?:is|are|seems?|looks?)\s+(?:fine|good|great|okay|ok|functional|'
+    r'operational)|in good condition|all good|everything(?:\s+is)?\s+'
+    r'(?:fine|good|great|okay|ok|working)|no\s+(?:issues?|problems?|'
+    r'complaints?|faults?))\b',
+    re.IGNORECASE,
+)
+
+
+def is_positive_feedback(text):
+    """Keep positive status notes out of the actionable issue queue."""
+    if NEGATIVE_FEEDBACK_PATTERN.search(text):
+        return False
+    return bool(POSITIVE_FEEDBACK_PATTERN.search(text))
+
 
 def analyze_issue_ai(text):
     X_test = vectorizer.transform([text])
-    category = cat_model.predict(X_test)[0]
-    confidence = round(max(cat_model.predict_proba(X_test)[0]) * 100, 1)
+    category = next(
+        (label for label, pattern in CATEGORY_RULES if pattern.search(text)),
+        None,
+    )
+    if category is None:
+        category = cat_model.predict(X_test)[0]
+        confidence = max(cat_model.predict_proba(X_test)[0])
+        # Fallback if user types random junk/gibberish.
+        if confidence < 0.30:
+            category = 'General Campus Facility'
     priority = prio_model.predict(X_test)[0]
-
-    # Fallback if user types random junk/gibberish
-    if confidence < 30.0:
-        return "General Campus Facility (Low Conf.)", "Low"
-    return f"{category} ({confidence}% AI)", priority
+    return category, priority
 # ------------------------------------------------------------
 
 
@@ -72,6 +125,11 @@ def init_db():
                     category TEXT,
                     priority TEXT,
                     status TEXT,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS feedback (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    student TEXT,
+                    description TEXT,
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)''')
     columns = {row[1] for row in c.execute('PRAGMA table_info(issues)')}
     if 'created_at' not in columns:
@@ -137,24 +195,41 @@ def student_panel():
 
     conn = get_db_connection()
     error = None
+    notice = None
     if request.method == 'POST':
         desc = request.form.get('description', '').strip()
         if not 5 <= len(desc) <= 2000:
             error = 'Description must be between 5 and 2000 characters.'
         else:
-            category, priority = analyze_issue_ai(desc)
-            conn.execute(
-                "INSERT INTO issues (student, description, category, priority, status) VALUES (?, ?, ?, ?, ?)",
-                (session['username'], desc, category, priority, 'Open')
-            )
+            if is_positive_feedback(desc):
+                conn.execute(
+                    "INSERT INTO feedback (student, description) VALUES (?, ?)",
+                    (session['username'], desc)
+                )
+                notice = 'Thanks! Your feedback was saved separately from reported issues.'
+            else:
+                category, priority = analyze_issue_ai(desc)
+                conn.execute(
+                    "INSERT INTO issues (student, description, category, priority, status) VALUES (?, ?, ?, ?, ?)",
+                    (session['username'], desc, category, priority, 'Open')
+                )
+                notice = 'Your campus issue was submitted.'
             conn.commit()
 
     issues = conn.execute(
         "SELECT * FROM issues WHERE student=? ORDER BY id DESC",
         (session['username'],)
     ).fetchall()
+    feedback = conn.execute(
+        "SELECT * FROM feedback WHERE student=? ORDER BY id DESC",
+        (session['username'],)
+    ).fetchall()
     conn.close()
-    return render_template('student.html', issues=issues, stats=get_stats(issues), user=session['username'], error=error)
+    return render_template(
+        'student.html', issues=issues, feedback=feedback,
+        stats=get_stats(issues), user=session['username'], error=error,
+        notice=notice,
+    )
 
 
 @app.route('/admin')
@@ -164,8 +239,12 @@ def admin_panel():
 
     conn = get_db_connection()
     issues = conn.execute("SELECT * FROM issues ORDER BY id DESC").fetchall()
+    feedback = conn.execute("SELECT * FROM feedback ORDER BY id DESC").fetchall()
     conn.close()
-    return render_template('admin.html', issues=issues, stats=get_stats(issues), user=session['username'])
+    return render_template(
+        'admin.html', issues=issues, feedback=feedback,
+        stats=get_stats(issues), user=session['username'],
+    )
 
 
 @app.route('/update_issue/<int:issue_id>', methods=['POST'])

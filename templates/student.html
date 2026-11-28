@@ -247,7 +247,7 @@ th {
 
     <section class="welcome">
         <h1>Student Dashboard 👋</h1>
-        <p>Report campus problems and track their progress.</p>
+        <p>Report campus problems, share feedback, and track your submissions.</p>
     </section>
 
 
@@ -283,20 +283,23 @@ th {
         {% if error %}
             <p role="alert" style="color:#b42318;margin-bottom:12px;">{{ error }}</p>
         {% endif %}
+        {% if notice %}
+            <p role="status" style="color:#205b45;margin-bottom:12px;">{{ notice }}</p>
+        {% endif %}
 
         <form method="POST">
 
             <textarea
                 name="description"
                 rows="4"
-                placeholder="Describe your campus problem here..."
+                placeholder="Describe a campus problem or share positive feedback..."
                 required
                 minlength="5"
                 maxlength="2000"
             ></textarea>
 
             <button type="submit">
-                Submit Issue →
+                Submit →
             </button>
 
         </form>
@@ -316,7 +319,7 @@ th {
                     <tr>
                         <th>ID</th>
                         <th>Description</th>
-                        <th>AI Category</th>
+                        <th>Category</th>
                         <th>Priority</th>
                         <th>Status</th>
                         <th>Date</th>
@@ -347,6 +350,50 @@ th {
                     <tr>
                         <td colspan="6" style="text-align:center;padding:30px;">
                             No issues reported yet.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+    <section class="panel">
+
+        <h2>💬 My Feedback</h2>
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Feedback</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% for item in feedback %}
+
+                    <tr>
+                        <td>#{{ item.id }}</td>
+                        <td>{{ item.description }}</td>
+                        <td>{{ item.created_at }}</td>
+                    </tr>
+
+                {% else %}
+
+                    <tr>
+                        <td colspan="3" style="text-align:center;padding:30px;">
+                            No feedback submitted yet.
                         </td>
                     </tr>
 

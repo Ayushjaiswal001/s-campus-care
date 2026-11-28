@@ -1,6 +1,6 @@
 # S Campus Care
 
-S Campus Care is a small Flask application for reporting campus facility issues. Students submit a description and track its status. An administrator reviews all reports and moves them through Open, In Progress, and Resolved. A local TF–IDF plus Multinomial Naive Bayes classifier suggests a category and priority.
+S Campus Care is a small Flask application for reporting campus facility issues. Students submit a description and track its status. Positive notes about facilities being fine or working are saved as feedback, separately from actionable issues. An administrator reviews reports and feedback, and moves issues through Open, In Progress, and Resolved. A local TF–IDF plus Multinomial Naive Bayes classifier suggests a category and priority; clear equipment and service keywords take precedence for category assignment.
 
 ## Requirements
 
@@ -27,7 +27,7 @@ $env:CAMPUSCARE_SECRET_KEY = [guid]::NewGuid().ToString('N')
 python app.py
 ```
 
-Open <http://127.0.0.1:5001/>. On first startup, the app creates `campuscare.db` tables and the local demonstration accounts. It migrates an older `issues` table by adding a timestamp column while preserving existing reports. SQLite stores the database next to `app.py` unless `CAMPUSCARE_DATABASE` points to another path.
+Open <http://127.0.0.1:5001/>. On first startup, the app creates `campuscare.db` tables and the local demonstration accounts. It migrates an older `issues` table by adding a timestamp column while preserving existing reports, and creates a separate table for feedback. SQLite stores the database next to `app.py` unless `CAMPUSCARE_DATABASE` points to another path.
 
 For repeat visits in the same PowerShell session, reuse the same `CAMPUSCARE_SECRET_KEY`; otherwise existing browser sessions are invalidated. Set `FLASK_DEBUG=1` only for local debugging. The app defaults to debug off.
 

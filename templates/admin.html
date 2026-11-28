@@ -142,7 +142,7 @@
                     <th>ID</th>
                     <th>Student</th>
                     <th>Issue Description</th>
-                    <th>AI Category</th>
+                    <th>Category</th>
                     <th>Priority</th>
                     <th>Status</th>
                     <th>Update Status</th>
@@ -168,6 +168,28 @@
                 </tr>
                 {% else %}
                 <tr><td colspan="7" style="color:#6c736f; text-align:center; padding:24px;">No campus issues reported yet.</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <div class="panel" style="margin-top:24px;">
+            <h2>Student Feedback</h2>
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Student</th>
+                    <th>Feedback</th>
+                    <th>Date</th>
+                </tr>
+                {% for item in feedback %}
+                <tr>
+                    <td>#{{ item.id }}</td>
+                    <td>{{ item.student }}</td>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.created_at }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="color:#6c736f; text-align:center; padding:24px;">No feedback submitted yet.</td></tr>
                 {% endfor %}
             </table>
         </div>
